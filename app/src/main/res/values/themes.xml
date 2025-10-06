@@ -1,0 +1,41 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.FunnuTV" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Pink theme colors -->
+        <item name="colorPrimary">@color/pink_primary</item>
+        <item name="colorPrimaryVariant">@color/pink_accent</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/pink_accent</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:colorBackground">@color/pink_light</item>
+        <item name="colorOnBackground">@color/text_primary</item>
+        <item name="android:statusBarColor">@color/transparent</item>
+        <item name="android:navigationBarColor">@color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.FunnuTV" parent="Base.Theme.FunnuTV" />
+
+    <!-- Full screen theme for video activity -->
+    <style name="Theme.FunnuTV.FullScreen" parent="Theme.FunnuTV">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@drawable/pink_gradient_bg</item>
+    </style>
+
+    <!-- ExoPlayer button styles -->
+    <style name="ExoMediaButton.PlayPause" parent="Widget.AppCompat.ImageButton">
+        <item name="android:src">@drawable/exo_icon_play</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:scaleType">centerInside</item>
+    </style>
+
+    <style name="Theme.FunnuTV.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/pink_light</item> <!-- Add this -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/funnutv_new_apk_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.FunnuTV.FullScreen</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/transparent</item>
+    </style>
+
+
+</resources>

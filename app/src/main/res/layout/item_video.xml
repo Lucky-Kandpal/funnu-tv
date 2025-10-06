@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/kids_feed_bg">
+
+        <!-- Thumbnail Image -->
+        <ImageView
+            android:id="@+id/thumbnail_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/kids_feed_bg" />
+
+        <!-- Video Player Container -->
+        <FrameLayout
+            android:id="@+id/player_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    <!-- Loading indicator for video -->
+    <ProgressBar
+        android:id="@+id/video_loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:indeterminateTint="@color/white" />
+
+    <!-- Play/Pause overlay -->
+    <ImageView
+        android:id="@+id/play_pause_overlay"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center"
+        android:src="@drawable/play_fill_svgrepo_com"
+        android:visibility="gone"
+        android:padding="20dp"
+       />
+
+    <!-- Video title overlay -->
+    <TextView
+        android:id="@+id/video_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:padding="16dp"
+        android:visibility="gone" />
+
+</FrameLayout>

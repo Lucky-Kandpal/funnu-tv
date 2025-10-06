@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Safe zone for adaptive icon (center 66dp x 66dp) -->
+    <group
+        android:scaleX="0.61"
+        android:scaleY="0.61"
+        android:pivotX="54"
+        android:pivotY="54">
+        
+        <!-- Your logo content here - this will be scaled to fit the safe zone -->
+        <bitmap
+            android:src="@drawable/funnutv_new_apk_logo"
+            android:gravity="center" />
+    </group>
+</vector>

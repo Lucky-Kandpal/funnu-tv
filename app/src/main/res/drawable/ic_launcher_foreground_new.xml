@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Ensure the logo is centered and sized appropriately for adaptive icon safe zone -->
+    <item android:drawable="@drawable/funnutv_new_apk_logo" 
+          android:gravity="center"
+          android:width="66dp"
+          android:height="66dp" />
+</layer-list>

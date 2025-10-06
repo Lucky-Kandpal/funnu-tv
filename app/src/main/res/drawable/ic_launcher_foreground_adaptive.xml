@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Use a percentage-based approach - 66dp is 61% of 108dp -->
+    <!-- This ensures the logo scales properly on all screen densities -->
+    <item android:drawable="@drawable/funnutv_new_apk_logo" 
+          android:gravity="center"
+          android:width="0dp"
+          android:height="0dp"
+          android:left="21dp"
+          android:right="21dp"
+          android:top="21dp"
+          android:bottom="21dp" />
+</layer-list>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Pink background -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FF4696b8"/> <!-- soft pink -->
+        </shape>
+    </item>
+
+</layer-list>

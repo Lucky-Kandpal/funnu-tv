@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/kids_feed_bg"
+    android:padding="16dp">
+
+        <!-- Curved Video Container -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/video_curved_container"
+            android:clipToOutline="true">
+            
+            <!-- Thumbnail Image -->
+            <ImageView
+                android:id="@+id/thumbnail_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/kids_feed_bg" />
+
+            <!-- Video Player Container -->
+            <FrameLayout
+                android:id="@+id/player_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToOutline="true" />
+                
+        </FrameLayout>
+
+    <!-- Loading indicator for video -->
+    <ProgressBar
+        android:id="@+id/video_loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:indeterminateTint="@color/white" />
+
+    <!-- Play/Pause overlay -->
+    <ImageView
+        android:id="@+id/play_pause_overlay"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center"
+        android:src="@android:drawable/ic_media_play"
+        android:visibility="gone"
+        android:padding="20dp"
+        app:tint="@color/white" />
+
+    <!-- Video title overlay -->
+    <TextView
+        android:id="@+id/video_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:padding="16dp"
+        android:visibility="gone" />
+
+</FrameLayout>

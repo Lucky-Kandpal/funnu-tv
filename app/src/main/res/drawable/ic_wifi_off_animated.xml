@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    
+    <!-- WiFi Off Icon with rounded background -->
+    <path
+        android:fillColor="@color/pink_primary"
+        android:pathData="M24,8.98A16.88,16.88 0 0,0 12,4C7.31,4 3.07,5.9 0,8.98L12,21L24,8.98zM2.92,9.07C5.51,7.08 8.67,5.85 12,5.85C15.33,5.85 18.49,7.08 21.08,9.07L18.5,11.65C16.5,10.15 14.25,9.25 12,9.25C9.75,9.25 7.5,10.15 5.5,11.65L2.92,9.07zM12,13.5C13.38,13.5 14.5,14.62 14.5,16C14.5,17.38 13.38,18.5 12,18.5C10.62,18.5 9.5,17.38 9.5,16C9.5,14.62 10.62,13.5 12,13.5z"/>
+    
+    <!-- Diagonal line through the icon -->
+    <path
+        android:fillColor="@color/pink_primary"
+        android:strokeWidth="2"
+        android:strokeColor="@color/pink_primary"
+        android:pathData="M2,2L22,22"/>
+        
+</vector>

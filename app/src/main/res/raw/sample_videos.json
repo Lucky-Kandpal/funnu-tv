@@ -1,0 +1,64 @@
+{
+  "videos": [
+    {
+      "id": "1",
+      "title": "Big Buck Bunny",
+      "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "thumbnail": "https://picsum.photos/800/600?random=1"
+    },
+    {
+      "id": "2", 
+      "title": "Elephant's Dream",
+      "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+      "thumbnail": "https://picsum.photos/800/600?random=2"
+    },
+    {
+      "id": "3",
+      "title": "Sintel",
+      "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+      "thumbnail": "https://picsum.photos/800/600?random=3"
+    },
+    {
+      "id": "4",
+      "title": "Tears of Steel",
+      "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+      "thumbnail": "https://picsum.photos/800/600?random=4"
+    },
+    {
+      "id": "5",
+      "title": "What Carries You",
+      "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarriesYou.mp4",
+      "thumbnail": "https://picsum.photos/800/600?random=5"
+    },
+    {
+      "id": "6",
+      "title": "Sample Video 6",
+      "url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+      "thumbnail": "https://picsum.photos/800/600?random=6"
+    },
+    {
+      "id": "7",
+      "title": "Sample Video 7",
+      "url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4",
+      "thumbnail": "https://picsum.photos/800/600?random=7"
+    },
+    {
+      "id": "8",
+      "title": "Sample Video 8",
+      "url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_5mb.mp4",
+      "thumbnail": "https://picsum.photos/800/600?random=8"
+    },
+    {
+      "id": "9",
+      "title": "Big Buck Bunny 2",
+      "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "thumbnail": "https://picsum.photos/800/600?random=9"
+    },
+    {
+      "id": "10",
+      "title": "Elephant's Dream 2",
+      "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+      "thumbnail": "https://picsum.photos/800/600?random=10"
+    }
+  ]
+}

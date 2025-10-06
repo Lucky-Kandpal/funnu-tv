@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Funnu TV</string>
+    <string name="exo_controls_play_pause_description">Play/Pause</string>
+    <string name="oops_no_internet">Oops! No Internet</string>
+    <string name="please_check_your_connection_nand_try_again">Please check your connection\nand try again</string>
+
+</resources>
