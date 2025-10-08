@@ -14,8 +14,8 @@ android {
         applicationId = "com.saadho.funnutv"
         minSdk = 24
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.3"
+        versionCode = 8
+        versionName = "1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -55,6 +55,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.play.services.base)
 // check latest version
     // Other dependencies unchanged
     implementation(libs.androidx.recyclerview)
@@ -69,6 +70,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.splashscreen)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

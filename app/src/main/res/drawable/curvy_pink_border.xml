@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    
+    <!-- Curved corners for curvy appearance -->
+    <corners android:radius="26dp" />
+    <!-- Pink border -->
+    <stroke
+        android:width="10dp"
+        android:color="@color/pink_light" />
+    
+    <!-- Transparent background to show video -->
+    <solid android:color="@android:color/transparent" />
+    
+</shape>

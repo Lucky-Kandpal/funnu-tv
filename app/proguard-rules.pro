@@ -26,6 +26,22 @@
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
 
+# Google Play Services specific rules
+-keep class com.google.android.gms.common.** { *; }
+-keep class com.google.android.gms.tasks.** { *; }
+-keep class com.google.android.gms.internal.** { *; }
+-keep class com.google.android.gms.auth.** { *; }
+-keep class com.google.android.gms.ads.** { *; }
+
+# Prevent obfuscation of Google Play Services classes
+-keepnames class com.google.android.gms.** { *; }
+-keepnames class com.google.firebase.** { *; }
+
+# Keep all native methods
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
 # Keep Firebase data classes
 -keep class com.saadho.funnutv.data.Video { *; }
 -keep class com.saadho.funnutv.data.VideoResponse { *; }

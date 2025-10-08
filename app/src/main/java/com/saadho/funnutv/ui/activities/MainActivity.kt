@@ -36,11 +36,20 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.button.MaterialButton
 import android.widget.ImageView
+import android.media.MediaPlayer
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.util.Log
+import androidx.activity.enableEdgeToEdge
+import androidx.core.net.toUri
+import androidx.core.view.ViewCompat
 
 /**
  * Main activity for Funnu TV - displays auto-playing video feed
  * Enforces landscape orientation and handles 4-direction scrolling
  */
+
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var videoRecyclerView: RecyclerView
@@ -50,26 +59,94 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: VideoViewModel
     private lateinit var layoutManager: VideoLayoutManager
     private lateinit var gestureHandler: VideoGestureHandler
-    
+
     // Network connectivity monitoring
     private lateinit var connectivityManager: ConnectivityManager
     private lateinit var networkCallback: ConnectivityManager.NetworkCallback
     private var isNetworkAvailable = true
-    
+
     // No internet UI elements
     private lateinit var noInternetLayout: View
     private lateinit var retryButton: MaterialButton
     private lateinit var wifiIcon: ImageView
 
+    // Splash screen audio
+    private var splashMediaPlayer: MediaPlayer? = null
+    private var splashScreen: androidx.core.splashscreen.SplashScreen? = null
+
+    private fun applyEdgeToEdge() {
+        // Ensures your layout draws behind system bars
+        enableEdgeToEdge()
+
+        // Disable fitting system windows
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Let system handle light/dark bar icons automatically
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { view, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+    }
+    private fun playSplashAudio() {
+        try {
+            splashMediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                setDataSource(
+                    this@MainActivity,
+                    "android.resource://${packageName}/${R.raw.a_intro}".toUri()
+                )
+                prepare()
+                start()
+
+                setOnCompletionListener {
+                    // Hide splash screen when audio finishes
+                    splashScreen?.setOnExitAnimationListener { splashScreenView ->
+                        splashScreenView.remove()
+                    }
+                }
+
+                setOnErrorListener { _, what, extra ->
+                    Log.e("MainActivity", "MediaPlayer error: what=$what, extra=$extra")
+                    // Hide splash screen immediately if audio fails
+                    splashScreen?.setOnExitAnimationListener { splashScreenView ->
+                        splashScreenView.remove()
+                    }
+                    true
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error playing splash audio: ${e.message}")
+            splashScreen?.setOnExitAnimationListener { splashScreenView ->
+                splashScreenView.remove()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Install splash screen before calling super.onCreate()
-        installSplashScreen()
-        
         super.onCreate(savedInstanceState)
-        
+
+        setContentView(R.layout.activity_main)
+        applyEdgeToEdge()
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+        splashScreen = installSplashScreen()
+
+
+        // Play splash audio
+        playSplashAudio()
+
         // Enforce landscape orientation
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        
+
         // Set full screen
         setupFullScreen()
         
@@ -81,42 +158,24 @@ class MainActivity : AppCompatActivity() {
         initializeRecyclerView()
         initializeNetworkMonitoring()
         observeViewModel()
+
+        // Keep splash screen visible until audio finishes
+        keepSplashScreenVisible()
     }
-
-
-
-    private fun setupFullScreen() {
-        // Let content lay out edge-to-edge behind system bars (modern requirement on newer SDKs)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+ (API 30+): use WindowInsetsController
-            val controller = window.insetsController
-            if (controller != null) {
-                // Hide both status and navigation bars
-                controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                // Allow swipe to transiently reveal system bars, then auto-hide
-                controller.systemBarsBehavior =
-                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            } else {
-                // Compat path if controller is null
-                val compat = WindowInsetsControllerCompat(window, window.decorView)
-                compat.hide(WindowInsetsCompat.Type.systemBars())
-                compat.systemBarsBehavior =
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
-        } else {
-            // Android 7–10 (API 24–29): deprecated flags fallback
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility =
-                (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+    private fun keepSplashScreenVisible() {
+        splashScreen?.setOnExitAnimationListener { splashScreenView ->
+            // Custom exit animation or just remove
+            splashScreenView.remove()
         }
     }
+    private fun setupFullScreen() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.hide(WindowInsetsCompat.Type.systemBars())
+        controller.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    }
+
     private fun initializeViews() {
         videoRecyclerView = findViewById(R.id.video_recycler_view)
         loadingIndicator = findViewById(R.id.loading_indicator)
@@ -275,7 +334,7 @@ class MainActivity : AppCompatActivity() {
             viewModel.refreshVideos()
         } else {
             // Show a brief message that network is still unavailable
-            Toast.makeText(this, "Still no internet connection", Toast.LENGTH_SHORT).show()
+//            Toast.makeText(this, "Still no internet connection", Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -330,12 +389,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onVideoChanged(video: Video, position: Int) {
-        // Preload next few videos for seamless playback (only if network is available)
+        // Use intelligent preloading system
         if (isNetworkAvailable) {
-            val nextVideos = viewModel.getNextVideos(3) // Get next 3 videos
-            if (nextVideos.isNotEmpty()) {
-                val nextVideoUrls = nextVideos.map { it.url }
-                ExoPlayerPool.preloadVideos(nextVideoUrls)
+            val allVideos = viewModel.videos.value ?: emptyList()
+            if (allVideos.isNotEmpty()) {
+                val videoUrls = allVideos.map { it.url }
+                ExoPlayerPool.preloadVideos(videoUrls, position)
             }
         } else {
             android.util.Log.d("MainActivity", "Network not available, skipping video preloading")
@@ -343,20 +402,43 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun onVideoError(video: Video, position: Int) {
-        android.util.Log.w("MainActivity", "Video error for: ${video.title}, auto-advancing to next video")
+        android.util.Log.w("MainActivity", "Video error for: ${video.title}, removing from list and auto-advancing")
+        
+        // Remove the failed video from the list
+        viewModel.removeVideoAt(position)
         
         // Auto-advance to next video
         val currentIndex = viewModel.currentVideoIndex.value ?: 0
         val totalVideos = viewModel.getVideoCount()
         
-        if (totalVideos > 1) {
-            val nextIndex = (currentIndex + 1) % totalVideos
-            android.util.Log.d("MainActivity", "Auto-advancing from index $currentIndex to $nextIndex")
+        if (totalVideos > 0) {
+            // If we removed a video before the current position, adjust the current index
+            val adjustedIndex = if (position < currentIndex) {
+                currentIndex - 1
+            } else if (position == currentIndex) {
+                // If we removed the current video, stay at the same index (which now points to the next video)
+                currentIndex
+            } else {
+                currentIndex
+            }
             
-            // Update ViewModel and scroll to next video
-            viewModel.setCurrentVideoIndex(nextIndex)
-            videoRecyclerView.smoothScrollToPosition(nextIndex)
-            videoAdapter.setCurrentPosition(nextIndex)
+            // Ensure the index is within bounds
+            val nextIndex = if (adjustedIndex >= totalVideos) {
+                if (totalVideos > 0) 0 else -1
+            } else {
+                adjustedIndex
+            }
+            
+            if (nextIndex >= 0) {
+                android.util.Log.d("MainActivity", "Auto-advancing to index $nextIndex after removing video at $position")
+                
+                // Update ViewModel and scroll to next video
+                viewModel.setCurrentVideoIndex(nextIndex)
+                videoRecyclerView.smoothScrollToPosition(nextIndex)
+                videoAdapter.setCurrentPosition(nextIndex)
+            }
+        } else {
+            android.util.Log.w("MainActivity", "No videos left after removing failed video")
         }
     }
 
@@ -371,7 +453,7 @@ class MainActivity : AppCompatActivity() {
                 // Move to previous video
                 val newIndex = if (currentIndex > 0) currentIndex - 1 else totalVideos - 1
                 android.util.Log.d("MainActivity", "Moving UP to index: $newIndex")
-                Toast.makeText(this, "UP - Video ${newIndex + 1}", Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this, "UP - Video ${newIndex + 1}", Toast.LENGTH_SHORT).show()
                 viewModel.setCurrentVideoIndex(newIndex)
                 videoRecyclerView.smoothScrollToPosition(newIndex)
             }
@@ -379,7 +461,7 @@ class MainActivity : AppCompatActivity() {
                 // Move to next video
                 val newIndex = if (currentIndex < totalVideos - 1) currentIndex + 1 else 0
                 android.util.Log.d("MainActivity", "Moving DOWN to index: $newIndex")
-                Toast.makeText(this, "DOWN - Video ${newIndex + 1}", Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this, "DOWN - Video ${newIndex + 1}", Toast.LENGTH_SHORT).show()
                 viewModel.setCurrentVideoIndex(newIndex)
                 videoRecyclerView.smoothScrollToPosition(newIndex)
             }
@@ -387,7 +469,7 @@ class MainActivity : AppCompatActivity() {
                 // Move to previous video (alternative gesture)
                 val newIndex = if (currentIndex > 0) currentIndex - 1 else totalVideos - 1
                 android.util.Log.d("MainActivity", "Moving LEFT to index: $newIndex")
-                Toast.makeText(this, "LEFT - Video ${newIndex + 1}", Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this, "LEFT - Video ${newIndex + 1}", Toast.LENGTH_SHORT).show()
                 viewModel.setCurrentVideoIndex(newIndex)
                 videoRecyclerView.smoothScrollToPosition(newIndex)
             }
@@ -395,7 +477,7 @@ class MainActivity : AppCompatActivity() {
                 // Move to next video (alternative gesture)
                 val newIndex = if (currentIndex < totalVideos - 1) currentIndex + 1 else 0
                 android.util.Log.d("MainActivity", "Moving RIGHT to index: $newIndex")
-                Toast.makeText(this, "RIGHT - Video ${newIndex + 1}", Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this, "RIGHT - Video ${newIndex + 1}", Toast.LENGTH_SHORT).show()
                 viewModel.setCurrentVideoIndex(newIndex)
                 videoRecyclerView.smoothScrollToPosition(newIndex)
             }
@@ -449,6 +531,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        // Clean up splash audio
+        splashMediaPlayer?.release()
+        splashMediaPlayer = null
         // Unregister network callback
         try {
             connectivityManager.unregisterNetworkCallback(networkCallback)
@@ -463,6 +549,11 @@ class MainActivity : AppCompatActivity() {
         videoAdapter.cleanupRecyclerViewPlayers(videoRecyclerView)
         // Release ExoPlayerPool
         ExoPlayerPool.release()
+    }override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            setupFullScreen()
+        }
     }
 
 }

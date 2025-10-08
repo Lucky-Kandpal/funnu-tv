@@ -1,6 +1,8 @@
 package com.saadho.funnutv.player
 
 import com.saadho.funnutv.cache.CacheManager
+import com.saadho.funnutv.cache.VideoCacheManager
+import com.saadho.funnutv.cache.VideoPreloader
 
 /**
  * Singleton pool for managing ExoPlayer instances.
@@ -16,6 +18,10 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import com.saadho.funnutv.NetworkUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 object ExoPlayerPool {
 
@@ -29,21 +35,38 @@ object ExoPlayerPool {
     fun initialize(context: Context) {
         this.context = context
         if (exoPlayer == null) {
+            // Initialize intelligent caching system
             CacheManager.initialize(context)
+            VideoPreloader.initialize(context)
 
             val dataSourceFactory = DefaultDataSource.Factory(context)
             val cacheDataSourceFactory = CacheDataSource.Factory()
                 .setCache(CacheManager.getCache()!!)  // force non-null
                 .setUpstreamDataSourceFactory(dataSourceFactory)
+                .setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE or CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
 
             val mediaSourceFactory = DefaultMediaSourceFactory(cacheDataSourceFactory)
 
             exoPlayer = ExoPlayer.Builder(context)
                 .setMediaSourceFactory(mediaSourceFactory)
+                .setLoadControl(
+                    androidx.media3.exoplayer.DefaultLoadControl.Builder()
+                        .setBufferDurationsMs(
+                            15000, // Min buffer duration (15 seconds)
+                            50000, // Max buffer duration (50 seconds)
+                            2500,  // Buffer for playback (2.5 seconds)
+                            5000   // Buffer for playback after rebuffer (5 seconds)
+                        )
+                        .setTargetBufferBytes(-1) // Use time-based buffering
+                        .setPrioritizeTimeOverSizeThresholds(true)
+                        .build()
+                )
                 .build()
                 .apply {
                     repeatMode = Player.REPEAT_MODE_OFF
                     playWhenReady = false
+                    // Enable faster startup
+                    setVideoScalingMode(androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING)
                 }
         }
     }
@@ -62,12 +85,28 @@ object ExoPlayerPool {
             }
             
             if (currentVideoUrl != videoUrl) {
-                val mediaItem = MediaItem.fromUri(videoUrl)
-                player.setMediaItem(mediaItem, /* resetPosition = */ true)  // example usage
-                player.prepare()
-                player.playWhenReady = true
-                currentVideoUrl = videoUrl
-                android.util.Log.d("ExoPlayerPool", "Playing video: $videoUrl")
+                // Update video access in cache manager
+                VideoCacheManager.updateVideoAccess(videoUrl)
+                
+                // Prepare video on background thread for better performance
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val mediaItem = MediaItem.fromUri(videoUrl)
+                        
+                        // Switch back to main thread for player operations
+                        withContext(Dispatchers.Main) {
+                            player.setMediaItem(mediaItem, /* resetPosition = */ true)
+                            player.prepare()
+                            player.playWhenReady = true
+                            currentVideoUrl = videoUrl
+                            
+                            val cacheStatus = if (VideoCacheManager.isVideoCached(videoUrl)) "cached" else "streaming"
+                            android.util.Log.d("ExoPlayerPool", "Playing video: $videoUrl ($cacheStatus)")
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("ExoPlayerPool", "Error preparing video: $videoUrl, error: ${e.message}")
+                    }
+                }
             } else {
                 player.playWhenReady = true
                 android.util.Log.d("ExoPlayerPool", "Resuming video: $videoUrl")
@@ -78,34 +117,9 @@ object ExoPlayerPool {
     }
 
 
-    fun preloadVideos(videoUrls: List<String>) {
-        val player = exoPlayer ?: return
-        val context = this.context ?: return
-        
-        // Check network connectivity before preloading videos
-        if (!NetworkUtils.isNetworkAvailable(context)) {
-            android.util.Log.w("ExoPlayerPool", "No network available, skipping video preloading")
-            return
-        }
-        
-        preloadQueue.clear()
-        videoUrls.take(maxPreloadCount).forEach { url ->
-            if (url != currentVideoUrl) {
-                preloadQueue.add(url)
-            }
-        }
-        preloadQueue.forEachIndexed { index, url ->
-            val mediaItem = MediaItem.fromUri(url)
-            if (player.mediaItemCount <= index) {
-                player.addMediaItem(mediaItem)
-            } else {
-                // Remove the old media item at index, then add the new one at the same index
-                player.removeMediaItem(index)
-                player.addMediaItem(index, mediaItem)
-            }
-        }
-
-        android.util.Log.d("ExoPlayerPool", "Preloaded ${preloadQueue.size} videos")
+    fun preloadVideos(videoUrls: List<String>, currentIndex: Int = 0) {
+        // Use the intelligent preloader
+        VideoPreloader.preloadVideos(videoUrls, currentIndex)
     }
 
     fun pauseVideo() {
@@ -132,6 +146,9 @@ object ExoPlayerPool {
     fun getDuration(): Long = exoPlayer?.duration ?: 0L
 
     fun release() {
+        // Clean up intelligent preloader
+        VideoPreloader.release()
+        
         exoPlayer?.release()
         exoPlayer = null
         currentVideoUrl = null

@@ -4,6 +4,9 @@
     <color name="pink_light">#FFC0CB</color>
     <color name="pink_primary">#FF69B4</color>
     <color name="pink_accent">#D81B60</color>
+    <color name="pink_bright">#FF1493</color>
+    <color name="pink_hot">#FF69B4</color>
+    <color name="pink_deep">#C71585</color>
     
     <!-- Basic colors -->
     <color name="black">#FF000000</color>

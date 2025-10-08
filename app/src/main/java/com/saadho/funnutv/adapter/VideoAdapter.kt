@@ -4,8 +4,6 @@ import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
-import android.view.SurfaceView
-import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -113,12 +111,12 @@ class VideoAdapter(
         init {
             // Apply curved corners to thumbnail view
             thumbnailView.clipToOutline = true
-//            thumbnailView.outlineProvider = object : android.view.ViewOutlineProvider() {
-//                override fun getOutline(view: android.view.View, outline: android.graphics.Outline) {
-//                    val cornerRadius = 24f * itemView.context.resources.displayMetrics.density
-//                    outline.setRoundRect(0, 0, view.width, view.height, cornerRadius)
-//                }
-//            }
+            thumbnailView.outlineProvider = object : android.view.ViewOutlineProvider() {
+                override fun getOutline(view: android.view.View, outline: android.graphics.Outline) {
+                    val cornerRadius = 26f * itemView.context.resources.displayMetrics.density // Match video player radius
+                    outline.setRoundRect(0, 0, view.width, view.height, cornerRadius)
+                }
+            }
             
             // Apply curved corners to player container
             playerContainer.clipToOutline = true
@@ -196,8 +194,8 @@ class VideoAdapter(
             try {
                 // Check network connectivity before loading thumbnail
                 if (!NetworkUtils.isNetworkAvailable(itemView.context)) {
-                    android.util.Log.w("VideoAdapter", "No network available, using fallback thumbnail")
-                    thumbnailView.setImageResource(R.drawable.kids_feed_bg)
+                    android.util.Log.w("VideoAdapter", "No network available, hiding thumbnail")
+                    thumbnailView.visibility = View.GONE
                     return
                 }
                 
@@ -205,14 +203,34 @@ class VideoAdapter(
                     .load(thumbnailUrl)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .placeholder(R.drawable.kids_feed_bg)
-                    .error(R.drawable.kids_feed_bg)
-                    .fallback(R.drawable.kids_feed_bg)
                     .timeout(10000) // 10 second timeout
+                    .listener(object : com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable> {
+                        override fun onLoadFailed(
+                            e: com.bumptech.glide.load.engine.GlideException?,
+                            model: Any?,
+                            target: com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable>?,
+                            isFirstResource: Boolean
+                        ): Boolean {
+                            android.util.Log.w("VideoAdapter", "Thumbnail load failed: $thumbnailUrl, hiding thumbnail")
+                            thumbnailView.visibility = View.GONE
+                            return true // Consume the event
+                        }
+                        
+                        override fun onResourceReady(
+                            resource: android.graphics.drawable.Drawable?,
+                            model: Any?,
+                            target: com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable>?,
+                            dataSource: com.bumptech.glide.load.DataSource?,
+                            isFirstResource: Boolean
+                        ): Boolean {
+                            thumbnailView.visibility = View.VISIBLE
+                            return false // Let Glide handle the loading
+                        }
+                    })
                     .into(thumbnailView)
             } catch (e: Exception) {
-                android.util.Log.w("VideoAdapter", "Error loading thumbnail: $thumbnailUrl, error: ${e.message}")
-                // Set fallback thumbnail
-                thumbnailView.setImageResource(R.drawable.kids_feed_bg)
+                android.util.Log.w("VideoAdapter", "Error loading thumbnail: $thumbnailUrl, hiding thumbnail, error: ${e.message}")
+                thumbnailView.visibility = View.GONE
             }
         }
 
@@ -221,31 +239,7 @@ class VideoAdapter(
             // Remove existing player view
             playerContainer.removeAllViews()
 
-            // Create a FrameLayout to wrap the PlayerView
-            val frameLayout = FrameLayout(itemView.context).apply {
-                layoutParams = FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT
-                )
-                clipChildren = true
-                clipToPadding = true
-
-                // Create a GradientDrawable for the border with rounded corners
-                val borderColor = Color.parseColor("#F4C2C2") // Baby pink color
-                val borderWidth = 8 // Border width in pixels
-                val cornerRadius = 24f * itemView.context.resources.displayMetrics.density // Corner radius in pixels
-
-                val borderDrawable = GradientDrawable().apply {
-                    shape = GradientDrawable.RECTANGLE
-                    setColor(Color.TRANSPARENT) // Transparent background to show the border
-                    setStroke(borderWidth, borderColor)
-                    setCornerRadius(cornerRadius)
-                }
-
-                background = borderDrawable
-            }
-
-            // Create the PlayerView
+            // Create the PlayerView directly (border is now handled by XML)
             playerView = PlayerView(itemView.context).apply {
                 layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
@@ -253,53 +247,74 @@ class VideoAdapter(
                 )
                 useController = false
                 setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
+                // Add background color to prevent black screen
+                setBackgroundColor(Color.TRANSPARENT) // or Color.BLACK if you prefer
 
-                // Force TextureView and rounded corners
-                setPlayerSurfaceTypeToTextureView()
+                // Enable rounded corners to match the curvy border
                 clipToOutline = true
                 outlineProvider = object : ViewOutlineProvider() {
                     override fun getOutline(view: View, outline: Outline) {
-                        val cornerRadius = 24f * itemView.context.resources.displayMetrics.density
+                        val cornerRadius = 26f * itemView.context.resources.displayMetrics.density // Slightly smaller than border
                         outline.setRoundRect(0, 0, view.width, view.height, cornerRadius)
                     }
                 }
 
                 // Ensure video fills the entire PlayerView area
                 resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-
-                // Set a baby pink border
-                val borderColor = Color.parseColor("#F4C2C2") // Baby pink color
-                val borderWidth = 8 // Border width in pixels
-                val borderDrawable = GradientDrawable().apply {
-                    setStroke(borderWidth, borderColor)
-                    setColor(Color.TRANSPARENT) // Set background to transparent
-                    cornerRadius = 24f * itemView.context.resources.displayMetrics.density
-                }
-                background = borderDrawable
             }
 
-            // Add the PlayerView to the FrameLayout
-            frameLayout.addView(playerView)
-            playerContainer.addView(frameLayout)
+            // Add the PlayerView directly to the container
+            playerContainer.addView(playerView)
 
-            // Set player to the player view
+            // Set player to the player view and start playback asynchronously
             ExoPlayerPool.getPlayer()?.let { player ->
                 playerView?.player = player
 
                 // Add listener to handle playback states and errors
                 val listener = object : Player.Listener {
+//                    override fun onPlaybackStateChanged(playbackState: Int) {
+//                        when (playbackState) {
+//                            Player.STATE_READY -> {
+//                                videoLoading.visibility = View.GONE
+//                                // Hide thumbnail only when video is ready and playing
+//                                if (player.isPlaying) {
+//                                    thumbnailView.visibility = View.GONE
+//                                }
+//                            }
+//                            Player.STATE_BUFFERING -> {
+//                                videoLoading.visibility = View.VISIBLE
+//                                // Keep thumbnail visible while buffering
+//                                thumbnailView.visibility = View.VISIBLE
+//                            }
+//                            Player.STATE_ENDED -> {
+//                                videoLoading.visibility = View.GONE
+//                                showPlayButton()
+//                                // Show thumbnail when video ends
+//                                thumbnailView.visibility = View.VISIBLE
+//                            }
+//                            Player.STATE_IDLE -> {
+//                                videoLoading.visibility = View.GONE
+//                                // Show thumbnail when video is idle
+//                                thumbnailView.visibility = View.VISIBLE
+//                            }
+//                        }
+//                    }
+
+
                     override fun onPlaybackStateChanged(playbackState: Int) {
                         when (playbackState) {
                             Player.STATE_READY -> {
                                 videoLoading.visibility = View.GONE
-                                // Hide thumbnail only when video is ready and playing
+                                // Show thumbnail if video is paused, hide if playing
                                 if (player.isPlaying) {
                                     thumbnailView.visibility = View.GONE
+                                } else {
+                                    thumbnailView.visibility = View.VISIBLE
                                 }
                             }
                             Player.STATE_BUFFERING -> {
                                 videoLoading.visibility = View.VISIBLE
-                                // Keep thumbnail visible while buffering
+                                // Always show thumbnail while buffering
                                 thumbnailView.visibility = View.VISIBLE
                             }
                             Player.STATE_ENDED -> {
@@ -315,21 +330,33 @@ class VideoAdapter(
                             }
                         }
                     }
-
-                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        if (isPlaying) {
-                            thumbnailView.visibility = View.GONE
-                            playPauseOverlay.visibility = View.GONE // hide overlay if visible
-                        } else {
-                            thumbnailView.visibility = View.VISIBLE
-                            hidePlayButtonHandler.removeCallbacks(hidePlayButtonRunnable)
-                            playPauseOverlay.visibility = View.GONE // never show overlay automatically
-                        }
-                    }
+//                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+//                        if (isPlaying) {
+//                            thumbnailView.visibility = View.GONE
+//                            playPauseOverlay.visibility = View.GONE // hide overlay if visible
+//                        } else {
+//                            thumbnailView.visibility = View.VISIBLE
+//                            hidePlayButtonHandler.removeCallbacks(hidePlayButtonRunnable)
+//                            playPauseOverlay.visibility = View.GONE // never show overlay automatically
+//                        }
+//                    }
+override fun onIsPlayingChanged(isPlaying: Boolean) {
+    if (isPlaying) {
+        // Don't hide thumbnail immediately - wait for video to be ready
+        // thumbnailView.visibility = View.GONE  // Comment this out
+        playPauseOverlay.visibility = View.GONE // hide overlay if visible
+    } else {
+        thumbnailView.visibility = View.VISIBLE
+        hidePlayButtonHandler.removeCallbacks(hidePlayButtonRunnable)
+        playPauseOverlay.visibility = View.GONE // never show overlay automatically
+    }
+}
 
                     override fun onPlayerError(error: PlaybackException) {
                         videoLoading.visibility = View.GONE
-                        // Handle playback error
+                        android.util.Log.e("VideoAdapter", "Video playback error: ${error.message}, video: ${video.title}")
+                        // Notify the adapter about the video error
+                        onVideoError(video, adapterPosition)
                     }
                 }
 
@@ -359,37 +386,6 @@ class VideoAdapter(
     /**
      * Clean up resources when adapter is destroyed
      */
-    @OptIn(UnstableApi::class)
-    private fun PlayerView.setPlayerSurfaceTypeToTextureView() {
-        // Force TextureView instead of SurfaceView for rounded corners
-        this.videoSurfaceView?.let { surfaceView ->
-            if (surfaceView is SurfaceView) {
-                val textureView = TextureView(context)
-                textureView.layoutParams = surfaceView.layoutParams
-                textureView.id = surfaceView.id
-
-                // Remove the old SurfaceView
-                val index = this.indexOfChild(surfaceView)
-                this.removeView(surfaceView)
-
-                // Add TextureView in the same position
-                this.addView(textureView, index)
-
-                // Tell the PlayerView to render video here
-                this.setVideoTextureView(textureView)
-            }
-        }
-    }
-    @Suppress("DiscouragedPrivateApi")
-    private fun PlayerView.setVideoTextureView(textureView: TextureView) {
-        try {
-            val method = PlayerView::class.java.getDeclaredMethod("setVideoTextureView", TextureView::class.java)
-            method.isAccessible = true
-            method.invoke(this, textureView)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
 
 
     fun cleanupRecyclerViewPlayers(recyclerView: RecyclerView) {

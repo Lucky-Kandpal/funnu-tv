@@ -187,6 +187,9 @@ class VideoRepository(private val context: Context) {
                 return@withContext loadLocalVideos()
             }
 
+        } catch (e: SecurityException) {
+            android.util.Log.w("VideoRepository", "Firestore access blocked by security policy: ${e.message}, falling back to local JSON")
+            return@withContext loadLocalVideos()
         } catch (e: Exception) {
             android.util.Log.w("VideoRepository", "Firestore error: ${e.message}, falling back to local JSON", e)
             return@withContext loadLocalVideos()

@@ -197,6 +197,18 @@ class VideoViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     /**
+     * Remove video at specific index
+     */
+    fun removeVideoAt(index: Int) {
+        val videos = _videos.value?.toMutableList() ?: return
+        if (index in videos.indices) {
+            val removedVideo = videos.removeAt(index)
+            _videos.value = videos.toList()
+            android.util.Log.d("VideoViewModel", "Removed video at index $index: ${removedVideo.title}")
+        }
+    }
+    
+    /**
      * Clear error state
      */
     fun clearError() {
