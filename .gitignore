@@ -9,9 +9,9 @@
 .externalNativeBuild
 .cxx
 local.properties
-funnukids.jks
 app/release
 app/build
 .kotlin
 app/.gitignore
+funnukids.jks
 app/google-services.json
