@@ -14,3 +14,4 @@ app/release
 app/build
 .kotlin
 app/.gitignore
+app/google-services.json
